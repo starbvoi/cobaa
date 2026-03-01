@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Keuangan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div class="max-w-5xl mx-auto p-4 sm:p-8">
+    <header class="flex flex-col gap-2 mb-6">
+      <h1 class="text-2xl sm:text-3xl font-semibold">Keuangan</h1>
+      <p class="text-slate-600">Input transaksi → saldo otomatis dihitung.</p>
+    </header>
+
+    <!-- Saldo besar di depan -->
+    <section class="rounded-3xl bg-white border border-slate-200 shadow-sm p-5 sm:p-6 mb-6">
+      <div class="text-sm text-slate-500">Saldo saat ini</div>
+      <div id="net" class="mt-2 text-4xl sm:text-5xl font-bold">Rp 0</div>
+      <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+          <div class="text-xs text-slate-500">Total Pemasukan</div>
+          <div id="sumIncome" class="mt-1 text-lg font-semibold">Rp 0</div>
+        </div>
+        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+          <div class="text-xs text-slate-500">Total Pengeluaran</div>
+          <div id="sumExpense" class="mt-1 text-lg font-semibold">Rp 0</div>
+        </div>
+        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+          <div class="text-xs text-slate-500">Jumlah Transaksi</div>
+          <div id="count" class="mt-1 text-lg font-semibold">0</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+      <!-- FORM (kolom input data) -->
+      <div class="lg:col-span-2 rounded-3xl bg-white border border-slate-200 shadow-sm p-5 sm:p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold">Input Data</h2>
+          <span class="text-xs text-slate-500">disimpan di device</span>
+        </div>
+
+        <form id="txForm" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-sm text-slate-600">Tanggal</label>
+              <input id="date" type="date"
+                class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                required />
+            </div>
+            <div>
+              <label class="text-sm text-slate-600">Tipe</label>
+              <select id="type"
+                class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300">
+                <option value="income">Pemasukan</option>
+                <option value="expense">Pengeluaran</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-sm text-slate-600">Nominal</label>
+            <input id="amount" type="number" min="0" step="1" inputmode="numeric"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              placeholder="contoh: 50000" required />
+          </div>
+
+          <div>
+            <label class="text-sm text-slate-600">Catatan (opsional)</label>
+            <input id="note" type="text"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              placeholder="contoh: makan / gaji / transport" />
+          </div>
+
+          <button class="w-full rounded-2xl bg-slate-900 text-white py-2.5 font-semibold hover:bg-slate-800">
+            Simpan Transaksi
+          </button>
+
+          <button type="button" id="clearAll"
+            class="w-full rounded-2xl border border-slate-200 py-2.5 font-semibold hover:bg-slate-50">
+            Hapus Semua
+          </button>
+        </form>
+      </div>
+
+      <!-- LIST -->
+      <div class="lg:col-span-3 rounded-3xl bg-white border border-slate-200 shadow-sm p-5 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <h2 class="text-lg font-semibold">Riwayat</h2>
+          <div class="flex gap-2">
+            <select id="filter" class="rounded-2xl border border-slate-200 px-3 py-2 text-sm">
+              <option value="all">Semua</option>
+              <option value="income">Pemasukan</option>
+              <option value="expense">Pengeluaran</option>
+            </select>
+            <select id="sort" class="rounded-2xl border border-slate-200 px-3 py-2 text-sm">
+              <option value="newest">Terbaru</option>
+              <option value="oldest">Terlama</option>
+              <option value="largest">Nominal terbesar</option>
+              <option value="smallest">Nominal terkecil</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="empty" class="text-center text-slate-500 py-10 hidden">
+          Belum ada transaksi.
+        </div>
+
+        <div class="overflow-auto">
+          <table class="min-w-full text-sm">
+            <thead class="text-slate-500">
+              <tr class="border-b border-slate-200">
+                <th class="text-left py-2 pr-2">Tanggal</th>
+                <th class="text-left py-2 pr-2">Tipe</th>
+                <th class="text-left py-2 pr-2">Catatan</th>
+                <th class="text-right py-2 pl-2">Nominal</th>
+                <th class="text-right py-2 pl-2">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+  const KEY = "finance_tx_v2";
+  const el = (id) => document.getElementById(id);
+  const fmtIDR = (n) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
+
+  function loadTx() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; }
+  }
+  function saveTx(list) { localStorage.setItem(KEY, JSON.stringify(list)); }
+
+  function compute(list) {
+    let income = 0, expense = 0;
+    for (const t of list) (t.type === "income" ? income : expense) += t.amount;
+    return { income, expense, net: income - expense };
+  }
+
+  function applyView(list) {
+    const filter = el("filter").value;
+    const sort = el("sort").value;
+    let out = [...list];
+    if (filter !== "all") out = out.filter(x => x.type === filter);
+
+    if (sort === "newest") out.sort((a,b) => (b.date||"").localeCompare(a.date||""));
+    if (sort === "oldest") out.sort((a,b) => (a.date||"").localeCompare(b.date||""));
+    if (sort === "largest") out.sort((a,b) => b.amount - a.amount);
+    if (sort === "smallest") out.sort((a,b) => a.amount - b.amount);
+    return out;
+  }
+
+  function render() {
+    const list = loadTx();
+    const { income, expense, net } = compute(list);
+
+    el("sumIncome").textContent = fmtIDR(income);
+    el("sumExpense").textContent = fmtIDR(expense);
+    el("count").textContent = String(list.length);
+
+    const netEl = el("net");
+    netEl.textContent = fmtIDR(net);
+
+    // bikin -45 keliatan: merah kalau minus, hijau kalau plus
+    netEl.classList.remove("text-rose-600", "text-emerald-600", "text-slate-900");
+    netEl.classList.add(net < 0 ? "text-rose-600" : net > 0 ? "text-emerald-600" : "text-slate-900");
+
+    const view = applyView(list);
+    el("empty").classList.toggle("hidden", list.length !== 0);
+
+    const tbody = el("rows");
+    tbody.innerHTML = "";
+    for (const t of view) {
+      const tr = document.createElement("tr");
+      tr.className = "border-b border-slate-100";
+
+      const badge = t.type === "income"
+        ? `<span class="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-xs font-semibold border border-emerald-200">Pemasukan</span>`
+        : `<span class="inline-flex items-center rounded-full bg-rose-50 text-rose-700 px-2 py-0.5 text-xs font-semibold border border-rose-200">Pengeluaran</span>`;
+
+      tr.innerHTML = `
+        <td class="py-2 pr-2 whitespace-nowrap">${t.date || "-"}</td>
+        <td class="py-2 pr-2">${badge}</td>
+        <td class="py-2 pr-2">${(t.note || "").replaceAll("<","&lt;").replaceAll(">","&gt;")}</td>
+        <td class="py-2 pl-2 text-right font-semibold ${t.type === "expense" ? "text-rose-700" : "text-emerald-700"}">
+          ${t.type === "expense" ? "-" : ""}${fmtIDR(t.amount)}
+        </td>
+        <td class="py-2 pl-2 text-right">
+          <button data-id="${t.id}" class="del rounded-xl border border-slate-200 px-2 py-1 text-xs hover:bg-slate-50">Hapus</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    document.querySelectorAll(".del").forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-id");
+        const newList = loadTx().filter(x => x.id !== id);
+        saveTx(newList);
+        render();
+      };
+    });
+  }
+
+  // default tanggal hari ini
+  el("date").valueAsDate = new Date();
+
+  el("txForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const date = el("date").value;
+    const type = el("type").value;
+    const amount = Number(el("amount").value || 0);
+    const note = el("note").value.trim();
+    if (!date || amount <= 0) return;
+
+    const list = loadTx();
+    list.push({ id: crypto.randomUUID(), date, type, amount, note, createdAt: Date.now() });
+    saveTx(list);
+
+    el("amount").value = "";
+    el("note").value = "";
+    el("type").value = "income";
+    el("amount").focus();
+
+    render();
+  });
+
+  el("clearAll").addEventListener("click", () => {
+    if (confirm("Yakin hapus semua data?")) {
+      localStorage.removeItem(KEY);
+      render();
+    }
+  });
+
+  el("filter").addEventListener("change", render);
+  el("sort").addEventListener("change", render);
+
+  render();
+</script>
+</body>
+</html>
